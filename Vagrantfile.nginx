@@ -1,0 +1,63 @@
+VAGRANTFILE_API_VERSION = "2"
+
+Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
+	config.vm.box = "debian/stretch64"
+
+	config.vm.provider "virtualbox" do |vb|
+		vb.name = "nginxPlayground"
+		vb.memory = 2048
+		vb.cpus = 1
+	end
+
+	config.ssh.forward_agent = true
+
+	config.ssh.shell = "bash -c 'BASH_ENV=/etc/profile exec bash'"
+
+	config.vm.network "forwarded_port", guest: 5000, host: 5000
+	config.vm.network "private_network", ip: "10.10.10.3"
+
+	#config.vm.synced_folder "~/.aws", "/home/vagrant/.aws"
+
+	#found the latest download at https://nginx.org/download/
+	config.vm.provision "file", source: "./nginx-1.13.7.tar.gz", destination: "/vagrant/" 
+
+	#this init script came from http://kbeezie.com/debian-ubuntu-nginx-init-script/
+	#and is used to add nginx as a system-wide linux service
+	config.vm.provision "file", source: "./nginxInitScript.sh", destination: "/vagrant/"
+
+	config.vm.provision "shell", privileged: true, inline: <<-SHELL
+		sudo apt-get update --fix-missing
+
+		#add nginx deps
+		sudo apt-get -y -f install build-essential libpcre3 libpcre3-dev libpcrecpp0v5
+		sudo apt-get -y -f install libssl-dev zlib1g-dev
+
+		#necessary tars and files were provisioned above. Open nginx and configure
+		cd /vagrant && tar -zxvf /vagrant/nginx-1.13.7.tar.gz && cd /vagrant/nginx-1.13.7/
+		./configure --sbin-path=/usr/bin/nginx  \ 			#custom bin location
+			    --conf-path=/etc/nginx/nginx.conf \			#custom conf location
+			    --error-log-path=/var/log/nginx/error.log \		#custom err location
+			    --http-log-path=/var/log/nginx/access.log \
+			    --with-debug \		#specify that we want debug output
+			    --with-pcre \		#allows regex in configuration
+			    --with-http_ssl_module	#adds ssl module
+		make					#build the objs/ folder and .o files
+		sudo make install			#install the application
+		sudo nginx
+		sudo mv /vagrant/nginxInitScript.sh /etc/init.d/nginx		#move the init script to proper location
+		sudo chmod +x /etc/init.d/nginx					#make it executable
+		sudo update-rc.d -f nginx defaults				#update 'service' so it knows about new nginx optionn
+		sudo echo "NGINX_CONF_FILE=/etc/nginx/nginx.conf" > /etc/default/nginx		#set vars that the init script will need 
+		sudo echo "DAEMON=/usr/bin/nginx" >> /etc/default/nginx				#this is due to the custom configuration
+		sudo service nginx start		#start service so everyone can talk to it
+	SHELL
+
+	config.vm.provision "shell", privileged: false, inline: <<-SHELL
+		#echo "export PATH=~/.local/bin:$PATH" >> .profile
+		#source .profile
+	SHELL
+
+	#config.vm.provision "shell", privileged: false, run:"always", inline: <<-SHELL
+		#commands here
+	#SHELL
+end
