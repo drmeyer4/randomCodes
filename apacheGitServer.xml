@@ -1,0 +1,17 @@
+<VirtualHost *:80>
+	DocumentRoot /usr/share/git
+	ServerName git.local
+
+	<Directory "/usr/share/git">
+		Allow from All
+		Options +Indexes +ExecCGI
+		AllowOverride All
+		Require all granted
+		#AddHandler cgi-script .cgi
+		#DirectoryIndex DynamicDockerTesting.git
+	</Directory>
+
+	SetEnv GIT_HTTP_EXPORT_ALL
+	SetEnv GIT_PROJECT_ROOT /usr/share/git
+	ScriptAlias /git /usr/libexec/git-core/git-http-backend
+</VirtualHost>

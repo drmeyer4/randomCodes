@@ -1,0 +1,19 @@
+version: '3'
+
+services:
+  jenkins:
+    build:
+      context:
+      dockerfile:
+      ports:
+      image:
+  apache:
+    build: #build custom image
+      context: . #directory to build in, this should go in Git repo
+      dockerfile: apache.Dockerfile
+      ports:
+        - '80:80'
+      image: apache-git-server #custom name for image
+      volumes: # could we just bind the git repos as volumes?
+        - 'src:dest'
+  openjdk:
