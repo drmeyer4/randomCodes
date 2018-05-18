@@ -1,17 +1,27 @@
-<VirtualHost *:80>
-	DocumentRoot /usr/share/git
-	ServerName git.local
+<Directory /usr/share>
+	AllowOverride None
+	Require all granted
+</Directory>
 
-	<Directory "/usr/share/git">
+<Directory /usr/local/apache2/git/>
+	Options Indexes FollowSymLinks
+	AllowOverride None
+	Require all granted
+</Directory>
+
+<VirtualHost *:80>
+	DocumentRoot /usr/local/apache2/git
+	#ServerName 192.168.1.32
+
+	<Directory "/usr/local/apache2/git">
 		Allow from All
 		Options +Indexes +ExecCGI
 		AllowOverride All
-		Require all granted
-		#AddHandler cgi-script .cgi
-		#DirectoryIndex DynamicDockerTesting.git
+		AddHandler cgi-script cgi
 	</Directory>
 
 	SetEnv GIT_HTTP_EXPORT_ALL
-	SetEnv GIT_PROJECT_ROOT /usr/share/git
-	ScriptAlias /git /usr/libexec/git-core/git-http-backend
+	SetEnv GIT_PROJECT_ROOT /usr/local/apache2/git
+	ScriptAlias /git/ /usr/libexec/git-core/git-http-backend
+	#ScriptAlias / /usr/share/gitweb/gitweb.cgi
 </VirtualHost>
