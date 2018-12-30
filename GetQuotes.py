@@ -18,7 +18,6 @@ def GetQuotes(*args):
 
     #create an XTextRange at the end of the document
     baseUrl = sheet.getCellRangeByName("T1").String
-    apiKey = sheet.getCellRangeByName("T2").String
 
     for idx in range(1, 1000):
         ticker = sheet.getCellRangeByName("R" + str(idx)).String
@@ -26,7 +25,7 @@ def GetQuotes(*args):
         if ticker == "THEEND":
             break
 
-        resp = req.get(baseUrl + ticker + apiKey)
+        resp = req.get(baseUrl + ticker)
 
         cellS = sheet.getCellRangeByName("S" + str(idx))
         cellS.String = resp.json()['Global Quote']['05. price']
